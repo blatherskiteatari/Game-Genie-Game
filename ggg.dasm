@@ -1,0 +1,107 @@
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+        include "xmacro.h"
+
+Spriteheight equ 8
+    seg.u Variables
+	org $80
+xpos byte 
+ypos byte 
+	seg Code
+    org $f000
+Start
+    CLEAN_START
+   ldy #30
+   sty xpos
+   sty ypos
+vsync
+   VERTICAL_SYNC
+   TIMER_SETUP 37
+   lda #0
+   sta VBLANK
+
+   ldy #$10
+   sty COLUBK
+    lda #$5A
+    sta COLUP0
+    lda xpos
+    ldx #0
+
+   TIMER_WAIT
+   jsr joystick
+	jsr SetHorizPos	; set player 0 horiz. pos
+    sta WSYNC	; sync w/ scanline
+    sta HMOVE	; apply fine offsets
+    ldy #189
+    ldx #8
+main
+   sta WSYNC
+P0do
+   cpx #0
+   beq P0dontdraw
+   lda Candycreature,x
+   sta GRP0 
+   dey 
+   cpy ypos ;does nothing atm
+   bne P0write
+   TIMER_SETUP 30
+   lda #2
+   sta VBLANK
+   jmp overscan
+P0write
+   dex
+   cpx #0
+   bne main
+   cpy #0
+   bne main
+P0dontdraw
+   dey
+   lda #0
+   sta GRP0
+   cpy #0
+   bne main
+   lda #2
+   sta VBLANK
+   TIMER_SETUP 30
+overscan
+   TIMER_WAIT
+   jmp vsync
+SetHorizPos
+	sta WSYNC	; start a new line
+	sta HMOVE	; apply the previous fine position(s)
+	sta HMCLR	; reset the old horizontal position(s)
+	sec		; set carry flag
+DivideLoop
+	sbc #15		; subtract 15
+	bcs DivideLoop	; branch until negative
+	eor #7		; calculate fine offset
+	asl
+	asl
+	asl
+	asl
+	sta RESP0,x	; fix coarse position
+	sta HMP0,x	; set fine offset
+	rts		; return to caller
+joystick
+   ldx ypos
+   lda #%00100000	;Up?
+	bit SWCHA
+   bne test
+   dex 
+test 
+   stx ypos
+   rts
+Candycreature
+        .byte #%00000000
+        .byte #%11011000;$5A
+        .byte #%01010000;$5A
+        .byte #%01110000;$5A
+        .byte #%01110000;$5A
+        .byte #%01110000;$5A
+        .byte #%01111000;$5A
+        .byte #%00010000;$5A
+        .byte #%00010000;$5A
+	org $fffc
+ .word Start	; reset vector
+ .word Start	; BRK vector
