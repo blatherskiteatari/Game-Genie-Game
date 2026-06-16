@@ -30,38 +30,38 @@ vsync
 
    TIMER_WAIT
    jsr joystick
-	jsr SetHorizPos	; set player 0 horiz. pos
+	jsr SetHorizPos	; set player 0 horiz. pos. STOLEN FROM 8bitworkshop PLEASE REMEMBER TO CREDIT HIM -Your loving programmer which is yourself
     sta WSYNC	; sync w/ scanline
     sta HMOVE	; apply fine offsets
-    ldy #189
-    ldx #8
+    ldy #189 ;the number of scanlines that makes this semi happy
+    ldx #8 ;the sprite height
 main
-   sta WSYNC
+   sta WSYNC ;wait
 P0do
-   cpx #0
-   beq P0dontdraw
-   lda Candycreature,x
-   sta GRP0 
-   dey 
-   cpy ypos ;does nothing atm
-   bne P0write
-   TIMER_SETUP 30
+   cpx #0 ;if zero
+   beq P0dontdraw ;dont draw
+   lda Candycreature,x ;load the candy creature
+   sta GRP0 ;store it in the magic write player variable
+   dey ;make the scanline counter go down 
+   cpy ypos ;does nothing atm????
+   bne P0write ;do the write thing some more
+   TIMER_SETUP 30 ;Overscan nonsense
    lda #2
    sta VBLANK
    jmp overscan
 P0write
-   dex
+   dex ;Make the x variable Smoller
    cpx #0
    bne main
-   cpy #0
+   cpy #0 ;Theoretically does something
    bne main
 P0dontdraw
-   dey
+   dey 
    lda #0
    sta GRP0
    cpy #0
    bne main
-   lda #2
+   lda #2 ;overscan nonsense #2 because I dont know which one is actually doing something...
    sta VBLANK
    TIMER_SETUP 30
 overscan
